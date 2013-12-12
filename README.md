@@ -16,12 +16,14 @@ Tiva Template
 * libftdi-dev
 * python-yaml
 * zlib1g-dev
+* arm-none-eabi
+* cutecom
 
-To get all dependencies on Ubuntu:
+To get all dependencies on Debian:
 
     apt-get install flex bison libgmp3-dev libmpfr-dev libncurses5-dev \
     libmpc-dev autoconf texinfo build-essential libftdi-dev python-yaml \
-    zlib1g-dev
+    zlib1g-dev binutils-arm-none-eabi gcc-arm-none-eabi cutecom
 
 You will need an ARM bare-metal toolchain to build code for Tiva targets.
 You can get a toolchain from the
@@ -30,13 +32,13 @@ pre-built for your platform. Extract the package and add the `bin` folder to
 your PATH.
 
 The TivaWare package contains all of the header files and drivers for
-Tiva parts. Grab the file *SW-TM4C-1.1.exe* from
+Tiva parts. Grab the file *SW-TM4C-2.0.1.11577.exe* from
 [here](http://software-dl.ti.com/tiva-c/SW-TM4C/latest/index_FDS.html) and unzip it into a directory
 then run `make` to build TivaWare.
 
-    mkdir tivaware
-    cd tivaware
-    unzip SW-TM4C-1.1.exe
+    mkdir -p ~/opt/tivaware
+    cd ~/opt/tivaware
+    unzip SW-TM4C-2.0.1.11577.exe
     make
 
 ## Writing and Building Firmware
@@ -45,14 +47,14 @@ then run `make` to build TivaWare.
    [tiva-template](https://github.com/uctools/tiva-template)
    repository (or fork it and clone your own repository).
 
-	git clone git@github.com:uctools/tiva-template
+	git clone git@github.com:mborko/tiva-template
 
 2. Modify the Makefile:
     * Set TARGET to the desired name of the output file (eg: TARGET = main)
     * Set SOURCES to a list of your sources (eg: SOURCES = main.c
       startup\_gcc.c)
     * Set TIVAWARE\_PATH to the full path to where you extracted and built
-      TivaWare (eg: TIVAWARE_PATH = /home/eric/code/tivaware)
+      TivaWare (eg: TIVAWARE_PATH = $(HOME)/opt/tivaware)
 
 3. Run `make`
 
