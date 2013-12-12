@@ -12,13 +12,14 @@ TARGET = main
 # MCU: part number to build for
 MCU = TM4C123GH6PM
 # SOURCES: list of input source sources
-SOURCES = main.c startup_gcc.c
+#SOURCES = main.c startup_gcc.c
+SOURCES = hello.c uartstdio.c startup_gcc.c
 # INCLUDES: list of includes, by default, use Includes directory
 INCLUDES = -IInclude
 # OUTDIR: directory to use for output
 OUTDIR = build
 # TIVAWARE_PATH: path to tivaware folder
-TIVAWARE_PATH = /home/eric/code/tivaware
+TIVAWARE_PATH = $(HOME)/opt/tivaware
 
 # LD_SCRIPT: linker script
 LD_SCRIPT = $(MCU).ld
@@ -53,15 +54,18 @@ all: $(OUTDIR)/$(TARGET).bin
 $(OUTDIR)/%.o: src/%.c | $(OUTDIR)
 	$(CC) -o $@ $^ $(CFLAGS)
 
-$(OUTDIR)/a.out: $(OBJECTS)
+$(OUTDIR)/$(TARGET): $(OBJECTS)
 	$(LD) -o $@ $^ $(LDFLAGS)
 
-$(OUTDIR)/main.bin: $(OUTDIR)/a.out
+$(OUTDIR)/$(TARGET).bin: $(OUTDIR)/$(TARGET)
 	$(OBJCOPY) -O binary $< $@
 
 # create the output directory
 $(OUTDIR):
 	$(MKDIR) $(OUTDIR)
+
+program: $(OUTDIR)/$(TARGET).bin
+	lm4flash $(OUTDIR)/$(TARGET).bin
 
 clean:
 	-$(RM) $(OUTDIR)/*
