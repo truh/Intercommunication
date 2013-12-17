@@ -11,15 +11,18 @@
 TARGET = main
 # MCU: part number to build for
 MCU = TM4C123GH6PM
-# SOURCES: list of input source sources
-#SOURCES = main.c startup_gcc.c
-SOURCES = hello.c uartstdio.c startup_gcc.c
-# INCLUDES: list of includes, by default, use Includes directory
-INCLUDES = -IInclude
 # OUTDIR: directory to use for output
 OUTDIR = build
 # TIVAWARE_PATH: path to tivaware folder
 TIVAWARE_PATH = $(HOME)/opt/tivaware
+
+# SOURCES: list of input source sources
+SOURCES = blink.c startup_main.c
+#SOURCES = hello.c uartstdio.c startup_main.c
+#SOURCES = gpio_jtag.c buttons.c uartstdio.c startup_systick.c
+
+# INCLUDES: list of includes, by default, use Includes directory
+INCLUDES = -Iinclude -I$(TIVAWARE_PATH)
 
 # LD_SCRIPT: linker script
 LD_SCRIPT = $(MCU).ld
@@ -27,7 +30,7 @@ LD_SCRIPT = $(MCU).ld
 # define flags
 CFLAGS = -g -mthumb -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=softfp
 CFLAGS +=-Os -ffunction-sections -fdata-sections -MD -std=c99 -Wall
-CFLAGS += -pedantic -DPART_$(MCU) -c -I$(TIVAWARE_PATH)
+CFLAGS += -pedantic -DPART_$(MCU) -c $(INCLUDES)
 CFLAGS += -DTARGET_IS_BLIZZARD_RA1
 LDFLAGS = -T $(LD_SCRIPT) --entry ResetISR --gc-sections
 
@@ -41,7 +44,7 @@ LDFLAGS = -T $(LD_SCRIPT) --entry ResetISR --gc-sections
 CC = arm-none-eabi-gcc
 LD = arm-none-eabi-ld
 OBJCOPY = arm-none-eabi-objcopy
-RM      = rm -f
+RM      = rm -rf
 MKDIR	= mkdir -p
 #######################################
 
