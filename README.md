@@ -72,7 +72,7 @@ The easiest way to flash your device is using lm4flash. First, grab lm4tools
 from Git.
 
     cd ~/opt
-    git clone git://github.com/utzig/lm4tools.git
+    git clone https://github.com/utzig/lm4tools.git
 
 Then build lm4flash and run it:
 
