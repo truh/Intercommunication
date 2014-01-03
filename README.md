@@ -17,13 +17,14 @@ Tiva Template
 * python-yaml
 * zlib1g-dev
 * cutecom
+* pkg-config
 * gcc-multilib
 
 To get all dependencies on Debian:
 
     apt-get install flex bison libgmp3-dev libmpfr-dev libncurses5-dev \
     libmpc-dev autoconf texinfo build-essential libftdi-dev python-yaml \
-    zlib1g-dev gcc-multilib cutecom
+    zlib1g-dev gcc-multilib pkg-config cutecom
 
 You will need an ARM bare-metal toolchain to build code for Tiva targets.
 You can get a toolchain from the
@@ -68,6 +69,8 @@ Add the Launchpad to the udev rules to be able to access it as a non-root user. 
     # TI Launchpad TM4C123GXL
     SUBSYSTEM=="usb", ATTRS{idVendor}=="1cbe", ATTRS{idProduct}=="00fd", MODE="0666", SYMLINK+="lm4f", GROUP="dialout"
 
+Don't forget to add your user to the defined group in /etc/group. Afterwards you should restart the udev system.
+
 The easiest way to flash your device is using lm4flash. First, grab lm4tools
 from Git.
 
@@ -80,7 +83,9 @@ Then build lm4flash and run it:
     make
     lm4flash /path/to/executable.bin
 
-For easier usage add the lm4flash to your PATH variable.
+For easier usage add the lm4flash to your PATH variable:
+
+    export PATH="$HOME/opt/lm4flash:$PATH"
 
 ## Credits
 
