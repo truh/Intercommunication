@@ -17,9 +17,12 @@ OUTDIR = build
 TIVAWARE_PATH = $(HOME)/opt/tivaware
 
 # SOURCES: list of input source sources
-SOURCES = blink.c startup_main.c
-#SOURCES = hello.c uartstdio.c startup_main.c
-#SOURCES = gpio_jtag.c buttons.c uartstdio.c startup_systick.c
+SOURCEDIR = src/buttons_isr
+SOURCES = $(wildcard $(SOURCEDIR)/*.c)
+
+SOURCES += $(TIVAWARE_PATH)/driverlib/gpio.c
+SOURCES += $(TIVAWARE_PATH)/utils/uartstdio.c
+#SOURCES += $(TIVAWARE_PATH)/examples/boards/ek-tm4c123gxl/drivers/buttons.c
 
 # INCLUDES: list of includes, by default, use Includes directory
 INCLUDES = -Iinclude -I$(TIVAWARE_PATH)
@@ -44,6 +47,7 @@ LDFLAGS = -T $(LD_SCRIPT) --entry ResetISR --gc-sections
 CC = arm-none-eabi-gcc
 LD = arm-none-eabi-ld
 OBJCOPY = arm-none-eabi-objcopy
+FLASH	= lm4flash
 RM      = rm -rf
 MKDIR	= mkdir -p
 #######################################
@@ -54,8 +58,8 @@ OBJECTS = $(addprefix $(OUTDIR)/,$(notdir $(SOURCES:.c=.o)))
 # default: build bin
 all: $(OUTDIR)/$(TARGET).bin
 
-$(OUTDIR)/%.o: src/%.c | $(OUTDIR)
-	$(CC) -o $@ $^ $(CFLAGS)
+$(OBJECTS): $(SOURCES) | $(OUTDIR)
+	$(CC) -o $@ $(filter %$(subst .o,.c,$(@F)), $(SOURCES)) $(CFLAGS)
 
 $(OUTDIR)/$(TARGET): $(OBJECTS)
 	$(LD) -o $@ $^ $(LDFLAGS)
@@ -68,7 +72,7 @@ $(OUTDIR):
 	$(MKDIR) $(OUTDIR)
 
 program: $(OUTDIR)/$(TARGET).bin
-	lm4flash $(OUTDIR)/$(TARGET).bin
+	$(FLASH) $(OUTDIR)/$(TARGET).bin
 
 clean:
 	-$(RM) $(OUTDIR)/*
