@@ -19,8 +19,10 @@
 int main()
 {
   uint8_t ui8Buttons;
-  uint8_t ui8ButtonsChanged;
   uint8_t led_switch;
+  /*
+  uint8_t ui8ButtonsChanged;
+  */
 
   ROM_SysCtlClockSet(SYSCTL_SYSDIV_4|SYSCTL_USE_PLL|SYSCTL_XTAL_16MHZ|SYSCTL_OSC_MAIN);
   ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);
