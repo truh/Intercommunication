@@ -17,7 +17,7 @@ OUTDIR = build
 TIVAWARE_PATH = $(HOME)/opt/tivaware
 
 # SOURCES: list of input source sources
-SOURCEDIR = src/buttons_isr
+SOURCEDIR = src/blink
 SOURCES = $(wildcard $(SOURCEDIR)/*.c)
 
 SOURCES += $(TIVAWARE_PATH)/driverlib/gpio.c
@@ -73,6 +73,11 @@ $(OUTDIR):
 
 program: $(OUTDIR)/$(TARGET).bin
 	$(FLASH) $(OUTDIR)/$(TARGET).bin
+
+flash: program
+
+debug: clean flash
+	debug/debug_nemiver.sh $(TARGET)
 
 clean:
 	-$(RM) $(OUTDIR)/*
