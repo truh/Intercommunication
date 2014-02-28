@@ -22,7 +22,7 @@ SOURCES = $(wildcard $(SOURCEDIR)/*.c)
 
 SOURCES += $(TIVAWARE_PATH)/driverlib/gpio.c
 SOURCES += $(TIVAWARE_PATH)/utils/uartstdio.c
-#SOURCES += $(TIVAWARE_PATH)/examples/boards/ek-tm4c123gxl/drivers/buttons.c
+SOURCES += $(TIVAWARE_PATH)/examples/boards/ek-tm4c123gxl/drivers/buttons.c
 
 # INCLUDES: list of includes, by default, use Includes directory
 INCLUDES = -Iinclude -I$(TIVAWARE_PATH)
