@@ -111,7 +111,7 @@ run:
 
 .. code:: bash
 
-    debug/debug_nemiver.sh
+    debug/debug_nemiver.sh <name of the hex artifact>
 
 ~~~~~~~~~~~~~
 Used Programs

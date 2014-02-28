@@ -13,7 +13,7 @@ sleep 2
 arm-none-eabi-gdb --batch --command=./debug/run.gdb build/$1
 
 # start the gdb gui
-nemiver --remote=localhost:3333 --gdb-binary="$(which arm-none-eabi-gdb)" build/main
+nemiver --remote=localhost:3333 --gdb-binary="$(which arm-none-eabi-gdb)" build/$1
 
 # close xterm when the user has exited nemiver
 kill $XTERM_PID
