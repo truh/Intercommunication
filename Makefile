@@ -6,9 +6,9 @@ TIVAWARE_PATH = $(HOME)/opt/tivaware/
 OUTDIR = build
 
 # Sources
-VPATH = src
+VPATH = src:$(TIVAWARE_PATH)
 
-COMMON_SRC = 
+COMMON_SRC = gpio.c ssi.c sysctl.c uart.c uartstdio.c
 MASTER_SRC = master.c
 SLAVE_SRC = slave.c
 
