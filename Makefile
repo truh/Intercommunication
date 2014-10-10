@@ -6,7 +6,7 @@ TIVAWARE_PATH = $(HOME)/opt/tivaware/
 OUTDIR = build
 
 # Sources
-VPATH = src:$(TIVAWARE_PATH):$(TIVAWARE_PATH)/driverlib
+VPATH = src:$(TIVAWARE_PATH):$(TIVAWARE_PATH)/driverlib:$(TIVAWARE_PATH)/utils
 
 COMMON_SRC = gpio.c ssi.c sysctl.c uart.c uartstdio.c interrupt.c
 MASTER_SRC = master.c
@@ -51,7 +51,7 @@ SLAVE_OBJS = $(addprefix $(OUTDIR)/,$(notdir $(ALL_SLAVE_SRC:.c=.o)))
 # default: build bin
 all: $(OUTDIR)/master.bin $(OUTDIR)/slave.bin
 
-$(OUTDIR)/%.o: src/%.c | $(OUTDIR)
+$(OUTDIR)/%.o: %.c | $(OUTDIR)
 	$(CC) -o $@ $^ $(CFLAGS)
 
 $(OUTDIR)/master.out: $(MASTER_OBJS)
