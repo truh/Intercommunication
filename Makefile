@@ -8,7 +8,7 @@ OUTDIR = build
 # Sources
 VPATH = src:$(TIVAWARE_PATH):$(TIVAWARE_PATH)/driverlib:$(TIVAWARE_PATH)/utils
 
-COMMON_SRC = gpio.c ssi.c sysctl.c uart.c uartstdio.c interrupt.c
+COMMON_SRC = gpio.c ssi.c sysctl.c uart.c uartstdio.c interrupt.c util.c startup_isr.c
 MASTER_SRC = master.c
 SLAVE_SRC = slave.c
 
@@ -21,7 +21,7 @@ LD_SCRIPT = $(MCU).ld
 CFLAGS = -g -mthumb -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=softfp
 CFLAGS +=-Os -ffunction-sections -fdata-sections -MD -std=c99 -Wall
 CFLAGS += -pedantic -DPART_$(MCU) -c -I$(TIVAWARE_PATH)
-CFLAGS += -DTARGET_IS_BLIZZARD_RA1
+CFLAGS += -DTARGET_IS_BLIZZARD_RA1 -Dgcc
 CFLAGS += $(INCLUDE)
 LDFLAGS = -T $(LD_SCRIPT) --entry ResetISR --gc-sections
 

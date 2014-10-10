@@ -63,7 +63,7 @@ void OnDataReceived(void)
 
 void EnableInterrupt(void) {
     // OnDataReceived will be the interrupt
-    IntRegister(INT_SSI0, OnDataReceived);
+    //IntRegister(INT_SSI0, OnDataReceived);
 
     // Enable SPI interrupt 
     IntEnable(INT_SSI0);
