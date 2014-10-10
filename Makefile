@@ -22,6 +22,7 @@ CFLAGS = -g -mthumb -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=softfp
 CFLAGS +=-Os -ffunction-sections -fdata-sections -MD -std=c99 -Wall
 CFLAGS += -pedantic -DPART_$(MCU) -c -I$(TIVAWARE_PATH)
 CFLAGS += -DTARGET_IS_BLIZZARD_RA1
+CFLAGS += $(INCLUDE)
 LDFLAGS = -T $(LD_SCRIPT) --entry ResetISR --gc-sections
 
 #######################################
@@ -38,11 +39,14 @@ RM      = rm -f
 MKDIR	= mkdir -p
 #######################################
 
-# list of object files, placed in the build directory regardless of source path
-MASTER_OBJS = $(addprefix $(OUTDIR)/,$(notdir $(SOURCES:.c=.o)))
+ALL_MASTER_SRC = $(MASTER_SRC) $(COMMON_SRC)
+ALL_SLAVE_SRC = $(SLAVE_SRC) $(COMMON_SRC)
 
 # list of object files, placed in the build directory regardless of source path
-SLAVE_OBJS = $(addprefix $(OUTDIR)/,$(notdir $(SOURCES:.c=.o)))
+MASTER_OBJS = $(addprefix $(OUTDIR)/,$(notdir $(ALL_MASTER_SRC:.c=.o)))
+
+# list of object files, placed in the build directory regardless of source path
+SLAVE_OBJS = $(addprefix $(OUTDIR)/,$(notdir $(ALL_SLAVE_SRC:.c=.o)))
 
 # default: build bin
 all: $(OUTDIR)/master.bin $(OUTDIR)/slave.bin
