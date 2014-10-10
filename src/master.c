@@ -12,6 +12,18 @@
 
 void OnDataReceived(void);
 
+void EnableInterrupt(void) {
+    // OnDataReceived will be the interrupt
+    IntRegister(INT_SSI0, OnDataReceived);
+
+    // Enable SPI interrupt 
+    IntEnable(INT_SSI0);
+    
+    // SPI interrupt from receiving data
+    // TODO Set when to call the interrupt
+    SSIIntEnable(SSI0_BASE, SSI_RXFF);
+}
+
 int main(void)
 {
     // Set the clocking to run directly from the external crystal/oscillator.
@@ -70,18 +82,9 @@ int main(void)
 	// Since we are using 8-bit data, mask off the MSB.
 	pui32DataRx[ui32Index] &= 0x00FF;*/
 	
-	// OnDataReceived will be the interrupt
-	IntRegister(INT_SSI0, OnDataReceived);
+    EnableInterrupt();
 
-	// Enable SPI interrupt	
-	IntEnable(INT_SSI0);
-	
-	// SPI interrupt from receiving data
-	// TODO Set when to call the interrupt
-	SSIIntEnable(SSI0_BASE, SSI_RXFF);
-	
-	// Interrupt enable
-	IntMasterEnable();
+    OS();  // start the operating system
 	
     return(0);
 }

@@ -48,6 +48,36 @@ void SetupSSI() {
     SSIEnable(SSI0_BASE);
 }
 
+void OnDataReceived(void)
+{
+    UARTprintf("\n\n*** DATA RECEIVED ***");
+    
+    unsigned long int_source = SSIIntStatus(SSI0_BASE, true);
+    unsigned long rx_data_size;
+    
+    SSIIntClear(SSI0_BASE, int_source);
+    
+    if(int_source & SSI_RXTO)
+    {
+        bool received = false;
+        rx_data_size = SSIDataGetNonBlocking(SSI0_BASE, &received);
+        
+        UARTprintf("\nData received via SSI: %s", (received)?"true":"false");
+    }
+}
+
+void EnableInterrupt(void) {
+    // OnDataReceived will be the interrupt
+    IntRegister(INT_SSI0, OnDataReceived);
+
+    // Enable SPI interrupt 
+    IntEnable(INT_SSI0);
+    
+    // SPI interrupt from receiving data
+    // TODO Set when to call the interrupt
+    SSIIntEnable(SSI0_BASE, SSI_TXFF);
+}
+
 int main(void)
 {
     SetupSSI();
@@ -60,19 +90,13 @@ int main(void)
     // The "non-blocking" function checks if there is any data in the receive
     // FIFO and does not "hang" if there isn't.
     while(SSIDataGetNonBlocking(SSI0_BASE, NULL));
-    
-    // OnDataReceived will be the interrupt
-    IntRegister(INT_SSI0, OnDataReceived);
 
-    // Enable SPI interrupt 
-    IntEnable(INT_SSI0);
-    
-    // SPI interrupt from receiving data
-    // TODO Set when to call the interrupt
-    SSIIntEnable(SSI0_BASE, SSI_RXFF);
-    
+    EnableInterrupt();
+
     // Interrupt enable
     IntMasterEnable();
+
+    OS();  // start the operating system
     
     return(0);
 }
