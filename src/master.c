@@ -1,7 +1,10 @@
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include "inc/hw_memmap.h"
+#include "inc/hw_ints.h"
 #include "driverlib/gpio.h"
+#include "driverlib/interrupt.h"
 #include "driverlib/pin_map.h"
 #include "driverlib/ssi.h"
 #include "driverlib/sysctl.h"
@@ -104,9 +107,9 @@ void OnDataReceived(void)
 	
 	if(int_source & SSI_RXTO)
 	{
-		bool received = false;
+		uint32_t received;
 		rx_data_size = SSIDataGetNonBlocking(SSI0_BASE, &received);
 		
-		UARTprintf("\nData received via SSI: %s", (received)?"true":"false");
+		UARTprintf("\n%d bits of data received via SSI: %s", rx_data_size, (received)?"true":"false");
 	}
 }
