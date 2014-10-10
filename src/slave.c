@@ -10,10 +10,7 @@
 
 #include "util.h"
 
-void OnDataReceived(void);
-
-int main(void)
-{
+void SetupSSI() {
     // Set the clocking to run directly from the external crystal/oscillator.
     SysCtlClockSet(SYSCTL_SYSDIV_1 | SYSCTL_USE_OSC | SYSCTL_OSC_MAIN |
                    SYSCTL_XTAL_16MHZ);
@@ -49,6 +46,11 @@ int main(void)
 
     // Enable the SSI0 module.
     SSIEnable(SSI0_BASE);
+}
+
+int main(void)
+{
+    SetupSSI();
 
     // Read any residual data from the SSI port.  This makes sure the receive
     // FIFOs are empty, so we don't read any unwanted junk.  This is done here
@@ -58,48 +60,19 @@ int main(void)
     // The "non-blocking" function checks if there is any data in the receive
     // FIFO and does not "hang" if there isn't.
     while(SSIDataGetNonBlocking(SSI0_BASE, NULL));
-	
-	/*
-	SSIDataPut(SSI0_BASE, pui32DataTx[ui32Index]);
+    
+    // OnDataReceived will be the interrupt
+    IntRegister(INT_SSI0, OnDataReceived);
 
-    // Wait until SSI0 is done transferring all the data in the transmit FIFO.
-    while(SSIBusy(SSI0_BASE));
-
-	SSIDataGet(SSI0_BASE, &pui32DataRx[ui32Index]);
-
-	// Since we are using 8-bit data, mask off the MSB.
-	pui32DataRx[ui32Index] &= 0x00FF;*/
-	
-	// OnDataReceived will be the interrupt
-	IntRegister(INT_SSI0, OnDataReceived);
-
-	// Enable SPI interrupt	
-	IntEnable(INT_SSI0);
-	
-	// SPI interrupt from receiving data
-	// TODO Set when to call the interrupt
-	SSIIntEnable(SSI0_BASE, SSI_RXFF);
-	
-	// Interrupt enable
-	IntMasterEnable();
-	
+    // Enable SPI interrupt 
+    IntEnable(INT_SSI0);
+    
+    // SPI interrupt from receiving data
+    // TODO Set when to call the interrupt
+    SSIIntEnable(SSI0_BASE, SSI_RXFF);
+    
+    // Interrupt enable
+    IntMasterEnable();
+    
     return(0);
-}
-
-void OnDataReceived(void)
-{
-	UARTprintf("\n\n*** DATA RECEIVED ***");
-	
-	unsigned long int_source = SSIIntStatus(SSI0_BASE, true);
-	unsigned long rx_data_size;
-	
-	SSIIntClear(SSI0_BASE, int_source);
-	
-	if(int_source & SSI_RXTO)
-	{
-		bool received = false;
-		rx_data_size = SSIDataGetNonBlocking(SSI0_BASE, &received);
-		
-		UARTprintf("\nData received via SSI: %s", (received)?"true":"false");
-	}
 }
