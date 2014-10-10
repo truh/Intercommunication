@@ -11,14 +11,6 @@
 #include "util.h"
 
 void SetupSSI() {
-    // Set the clocking to run directly from the external crystal/oscillator.
-    SysCtlClockSet(SYSCTL_SYSDIV_1 | SYSCTL_USE_OSC | SYSCTL_OSC_MAIN |
-                   SYSCTL_XTAL_16MHZ);
-
-    // Set up the serial console to use for displaying messages.  This is
-    // just for this example program and is not needed for SSI operation.
-    InitConsole();
-
     // The SSI0 peripheral must be enabled for use.
     SysCtlPeripheralEnable(SYSCTL_PERIPH_SSI0);
 
@@ -42,7 +34,7 @@ void SetupSSI() {
     // Configure and enable the SSI port for TI master mode.  Use SSI0, system
     // clock supply, master mode, 1MHz SSI frequency, and 8-bit data.
     SSIConfigSetExpClk(SSI0_BASE, SysCtlClockGet(), SSI_FRF_TI,
-                       SSI_MODE_MASTER, 1000000, 8);
+                       SSI_MODE_SLAVE, 1000000, 8);
 
     // Enable the SSI0 module.
     SSIEnable(SSI0_BASE);
@@ -50,6 +42,14 @@ void SetupSSI() {
 
 int main(void)
 {
+	// Set the clocking to run directly from the external crystal/oscillator.
+    SysCtlClockSet(SYSCTL_SYSDIV_1 | SYSCTL_USE_OSC | SYSCTL_OSC_MAIN |
+                   SYSCTL_XTAL_16MHZ);
+
+	// Set up the serial console to use for displaying messages.  This is
+    // just for this example program and is not needed for SSI operation.
+    InitConsole();
+	
     SetupSSI();
 
     // Read any residual data from the SSI port.  This makes sure the receive
