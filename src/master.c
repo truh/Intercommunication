@@ -24,16 +24,7 @@ void EnableInterrupt(void) {
     SSIIntEnable(SSI0_BASE, SSI_RXFF);
 }
 
-int main(void)
-{
-    // Set the clocking to run directly from the external crystal/oscillator.
-    SysCtlClockSet(SYSCTL_SYSDIV_1 | SYSCTL_USE_OSC | SYSCTL_OSC_MAIN |
-                   SYSCTL_XTAL_16MHZ);
-
-    // Set up the serial console to use for displaying messages.  This is
-    // just for this example program and is not needed for SSI operation.
-    InitConsole();
-
+void SetupSSI() {
     // The SSI0 peripheral must be enabled for use.
     SysCtlPeripheralEnable(SYSCTL_PERIPH_SSI0);
 
@@ -61,6 +52,19 @@ int main(void)
 
     // Enable the SSI0 module.
     SSIEnable(SSI0_BASE);
+}
+
+int main(void)
+{
+    // Set the clocking to run directly from the external crystal/oscillator.
+    SysCtlClockSet(SYSCTL_SYSDIV_1 | SYSCTL_USE_OSC | SYSCTL_OSC_MAIN |
+                   SYSCTL_XTAL_16MHZ);
+
+    // Set up the serial console to use for displaying messages.  This is
+    // just for this example program and is not needed for SSI operation.
+    InitConsole();
+
+    SetupSSI();
 
     // Read any residual data from the SSI port.  This makes sure the receive
     // FIFOs are empty, so we don't read any unwanted junk.  This is done here
