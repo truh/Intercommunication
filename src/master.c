@@ -8,6 +8,8 @@
 #include "driverlib/uart.h"
 #include "utils/uartstdio.h"
 
+#include "util.h"
+
 void InitConsole(void)
 {
 	// Enable GPIO Port A, used for UART0 pins.
