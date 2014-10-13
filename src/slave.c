@@ -98,6 +98,11 @@ int main(void)
 
     // Interrupt enable
     IntMasterEnable();
+	
+	SSIDataPut(SSI0_BASE, 10);
+
+    // Wait until SSI0 is done transferring all the data in the transmit FIFO.
+    while(SSIBusy(SSI0_BASE));
 
     OS();  // start the operating system
     
