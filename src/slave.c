@@ -9,77 +9,102 @@
 #include "driverlib/ssi.h"
 #include "driverlib/sysctl.h"
 #include "driverlib/uart.h"
-#include "utils/uartstdio.h"
 
 #include "util.h"
 
-void SetupSSI() {
-    // The SSI0 peripheral must be enabled for use.
-    SysCtlPeripheralEnable(SYSCTL_PERIPH_SSI0);
+#define LED_RED GPIO_PIN_1
+#define LED_BLUE GPIO_PIN_2
+#define LED_GREEN GPIO_PIN_3
+#define NUM_DATA 48
 
-    // SSI0 -> PortA[5:2].
-    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOA);
+void SetupSSI()
+{
+    // The SSI2 peripheral must be enabled for use.
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_SSI2);
 
-    // Configure the pin muxing for SSI0 functions on port A2, A3, A4, and A5.
-    GPIOPinConfigure(GPIO_PA2_SSI0CLK);
-    GPIOPinConfigure(GPIO_PA3_SSI0FSS);
-    GPIOPinConfigure(GPIO_PA4_SSI0RX);
-    GPIOPinConfigure(GPIO_PA5_SSI0TX);
+    // SSI2 -> PortA[5:2].
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOB);
+
+    // Configure the pin muxing for SSI2 functions on port B4, B5, B6, and B7.
+    GPIOPinConfigure(GPIO_PB4_SSI2CLK);
+    GPIOPinConfigure(GPIO_PB5_SSI2FSS);
+    GPIOPinConfigure(GPIO_PB6_SSI2RX);
+    GPIOPinConfigure(GPIO_PB7_SSI2TX);
 
     // Configure the GPIO settings for the SSI pins.
-    //      PA5 - SSI0Tx
-    //      PA4 - SSI0Rx
-    //      PA3 - SSI0Fss
-    //      PA2 - SSI0CLK
-    GPIOPinTypeSSI(GPIO_PORTA_BASE, GPIO_PIN_5 | GPIO_PIN_4 | GPIO_PIN_3 |
-                   GPIO_PIN_2);
+    //      PB7 - SSI2Tx
+    //      PB6 - SSI2Rx
+    //      PB5 - SSI2Fss
+    //      PB4 - SSI2CLK
+    GPIOPinTypeSSI(GPIO_PORTB_BASE, GPIO_PIN_7 | GPIO_PIN_6 | GPIO_PIN_5 |
+                   GPIO_PIN_4);
 
-    // Configure and enable the SSI port for TI master mode.  Use SSI0, system
+    // Configure and enable the SSI port for TI master mode.  Use SSI2, system
     // clock supply, master mode, 1MHz SSI frequency, and 8-bit data.
-    SSIConfigSetExpClk(SSI0_BASE, SysCtlClockGet(), SSI_FRF_TI,
-                       SSI_MODE_SLAVE, 1000000, 8);
+    SSIConfigSetExpClk(SSI2_BASE, SysCtlClockGet(), SSI_FRF_MOTO_MODE_0,
+                       SSI_MODE_SLAVE, 2000000, 8);
 
-    // Enable the SSI0 module.
-    SSIEnable(SSI0_BASE);
+    // Enable the SSI2 module.
+    SSIEnable(SSI2_BASE);
 }
 
 void OnDataReceived(void)
-{	
-	unsigned long int_source = SSIIntStatus(SSI0_BASE, true);
+{
+	ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, LED_BLUE);
+	
+	unsigned long int_source = SSIIntStatus(SSI2_BASE, true);
 	unsigned long rx_data_size;
 	
-	SSIIntClear(SSI0_BASE, int_source);
-	
+	if(SSI_RXTO)
+		ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, LED_RED);
+
 	if(int_source & SSI_RXTO)
 	{
-		UARTprintf("*** DATA RECEIVED\n\n");
-		uint32_t received;
-		rx_data_size = SSIDataGetNonBlocking(SSI0_BASE, &received);
+		uint32_t stuff;
+		//rx_data_size = SSIDataGetNonBlocking(SSI2_BASE, &received);
 		
-		UARTprintf("\n%d bits of data received via SSI: %d", rx_data_size, received);
+		//SSIDataGet(SSI2_BASE, &stuff);
+		
+		for(int_source = 0; int_source < NUM_DATA; int_source++)
+		{
+			SSIDataGet(SSI2_BASE, &stuff);
+		}
+		
+		//UARTprintf("\n%d bits of data received via SSI: %d", rx_data_size, received);
+		ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, LED_GREEN);
 	}
+	else
+	{
+		//ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, LED_RED);
+		//UARTprintf("\nsent stuff");
+	}
+	
+	SSIIntClear(SSI2_BASE, int_source);
 }
 
-void EnableInterrupt(void) {
-    // OnDataReceived will be the interrupt
-    //IntRegister(INT_SSI0, OnDataReceived);
-
+void EnableInterrupt(void)
+{
     // Enable SPI interrupt 
-    IntEnable(INT_SSI0);
+    IntEnable(INT_SSI2);
     
     // SPI interrupt from receiving data
-    SSIIntEnable(SSI0_BASE, SSI_TXFF);
+    // TODO Set when to call the interrupt
+    SSIIntEnable(SSI2_BASE, SSI_RXFF);
 }
 
 int main(void)
 {
-	// Set the clocking to run directly from the external crystal/oscillator.
+    // Set the clocking to run directly from the external crystal/oscillator.
     SysCtlClockSet(SYSCTL_SYSDIV_1 | SYSCTL_USE_OSC | SYSCTL_OSC_MAIN |
                    SYSCTL_XTAL_16MHZ);
 
-	// Set up the serial console to use for displaying messages.  This is
+	ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);
+  	ROM_GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, LED_RED|LED_BLUE|LED_GREEN);
+	ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, LED_GREEN);
+	
+    // Set up the serial console to use for displaying messages.  This is
     // just for this example program and is not needed for SSI operation.
-    InitConsole();
+    //InitConsole();
 	
     SetupSSI();
 
@@ -90,19 +115,27 @@ int main(void)
     // "true" when data was returned, and "false" when no data was returned.
     // The "non-blocking" function checks if there is any data in the receive
     // FIFO and does not "hang" if there isn't.
-    while(SSIDataGetNonBlocking(SSI0_BASE, NULL));
+    while(SSIDataGetNonBlocking(SSI2_BASE, NULL));
+	
+	//SSIDataPut(SSI2_BASE, 0xFF);
 
+    // Wait until SSI2 is done transferring all the data in the transmit FIFO.
+    //while(SSIBusy(SSI2_BASE))
+	//{
+	//	ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, LED_BLUE);
+	//}
+	
+	//ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, LED_GREEN);
+	
+	
+	//SSIDataGet(SSI2_BASE, &pui32DataRx[ui32Index]);
+
+	// Since we are using 8-bit data, mask off the MSB.
+	//pui32DataRx[ui32Index] &= 0x00FF;*/
+	
     EnableInterrupt();
 
-    // Interrupt enable
-    IntMasterEnable();
-	
-	SSIDataPut(SSI0_BASE, 10);
-
-    // Wait until SSI0 is done transferring all the data in the transmit FIFO.
-    while(SSIBusy(SSI0_BASE));
-
     OS();  // start the operating system
-    
+	
     return(0);
 }
