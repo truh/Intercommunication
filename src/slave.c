@@ -44,9 +44,7 @@ void SetupSSI() {
 }
 
 void OnDataReceived(void)
-{
-	UARTprintf("\n\n*** DATA RECEIVED ***");
-	
+{	
 	unsigned long int_source = SSIIntStatus(SSI0_BASE, true);
 	unsigned long rx_data_size;
 	
@@ -54,6 +52,7 @@ void OnDataReceived(void)
 	
 	if(int_source & SSI_RXTO)
 	{
+		UARTprintf("*** DATA RECEIVED\n\n");
 		uint32_t received;
 		rx_data_size = SSIDataGetNonBlocking(SSI0_BASE, &received);
 		
@@ -69,7 +68,6 @@ void EnableInterrupt(void) {
     IntEnable(INT_SSI0);
     
     // SPI interrupt from receiving data
-    // TODO Set when to call the interrupt
     SSIIntEnable(SSI0_BASE, SSI_TXFF);
 }
 
