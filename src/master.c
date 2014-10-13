@@ -13,20 +13,6 @@
 
 #include "util.h"
 
-void OnDataReceived(void);
-
-void EnableInterrupt(void) {
-    // OnDataReceived will be the interrupt
-    //IntRegister(INT_SSI0, OnDataReceived);
-
-    // Enable SPI interrupt 
-    IntEnable(INT_SSI0);
-    
-    // SPI interrupt from receiving data
-    // TODO Set when to call the interrupt
-    SSIIntEnable(SSI0_BASE, SSI_RXFF);
-}
-
 void SetupSSI() {
     // The SSI0 peripheral must be enabled for use.
     SysCtlPeripheralEnable(SYSCTL_PERIPH_SSI0);
@@ -55,6 +41,37 @@ void SetupSSI() {
 
     // Enable the SSI0 module.
     SSIEnable(SSI0_BASE);
+}
+
+void OnDataReceived(void)
+{
+	UARTprintf("\n\n*** DATA RECEIVED ***");
+	
+	unsigned long int_source = SSIIntStatus(SSI0_BASE, true);
+	unsigned long rx_data_size;
+	
+	SSIIntClear(SSI0_BASE, int_source);
+	
+	if(int_source & SSI_RXTO)
+	{
+		uint32_t received;
+		rx_data_size = SSIDataGetNonBlocking(SSI0_BASE, &received);
+		
+		UARTprintf("\n%d bits of data received via SSI: %d", rx_data_size, received);
+	}
+}
+
+
+void EnableInterrupt(void) {
+    // OnDataReceived will be the interrupt
+    //IntRegister(INT_SSI0, OnDataReceived);
+
+    // Enable SPI interrupt 
+    IntEnable(INT_SSI0);
+    
+    // SPI interrupt from receiving data
+    // TODO Set when to call the interrupt
+    SSIIntEnable(SSI0_BASE, SSI_RXFF);
 }
 
 int main(void)
@@ -94,22 +111,4 @@ int main(void)
     OS();  // start the operating system
 	
     return(0);
-}
-
-void OnDataReceived(void)
-{
-	UARTprintf("\n\n*** DATA RECEIVED ***");
-	
-	unsigned long int_source = SSIIntStatus(SSI0_BASE, true);
-	unsigned long rx_data_size;
-	
-	SSIIntClear(SSI0_BASE, int_source);
-	
-	if(int_source & SSI_RXTO)
-	{
-		uint32_t received;
-		rx_data_size = SSIDataGetNonBlocking(SSI0_BASE, &received);
-		
-		UARTprintf("\n%d bits of data received via SSI: %s", rx_data_size, (received)?"true":"false");
-	}
 }

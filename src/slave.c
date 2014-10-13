@@ -45,20 +45,20 @@ void SetupSSI() {
 
 void OnDataReceived(void)
 {
-    UARTprintf("\n\n*** DATA RECEIVED ***");
-    
-    unsigned long int_source = SSIIntStatus(SSI0_BASE, true);
-    unsigned long rx_data_size;
-    
-    SSIIntClear(SSI0_BASE, int_source);
-    
-    if(int_source & SSI_RXTO)
-    {
-        uint32_t received = false;
-        rx_data_size = SSIDataGetNonBlocking(SSI0_BASE, &received);
-        
-        UARTprintf("\nData received via SSI: %s", (received)?"true":"false");
-    }
+	UARTprintf("\n\n*** DATA RECEIVED ***");
+	
+	unsigned long int_source = SSIIntStatus(SSI0_BASE, true);
+	unsigned long rx_data_size;
+	
+	SSIIntClear(SSI0_BASE, int_source);
+	
+	if(int_source & SSI_RXTO)
+	{
+		uint32_t received;
+		rx_data_size = SSIDataGetNonBlocking(SSI0_BASE, &received);
+		
+		UARTprintf("\n%d bits of data received via SSI: %d", rx_data_size, received);
+	}
 }
 
 void EnableInterrupt(void) {
