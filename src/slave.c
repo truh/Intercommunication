@@ -40,7 +40,7 @@ void SetupSSI()
     // Configure and enable the SSI port for TI master mode.  Use SSI2, system
     // clock supply, master mode, 1MHz SSI frequency, and 8-bit data.
     SSIConfigSetExpClk(SSI2_BASE, SysCtlClockGet(), SSI_FRF_MOTO_MODE_0,
-                       SSI_MODE_SLAVE, 2000000, 8);
+                       SSI_MODE_MASTER, 2000000, 8);
 
     // Enable the SSI2 module.
     SSIEnable(SSI2_BASE);
@@ -48,32 +48,8 @@ void SetupSSI()
 
 void OnDataReceived(void)
 {
-	ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, LED_BLUE);
-	
-	unsigned long int_source = SSIIntStatus(SSI2_BASE, true);
-
-	if(int_source & SSI_RXFF)
-	{
-		UARTprintf("\n*** DATA RECEIVED! ***\n\nData: ");
-		uint32_t stuff;
-
-		for(int_source = 0; int_source < NUM_DATA; int_source++)
-		{
-			SSIDataGet(SSI2_BASE, &stuff);
-			UARTprintf("%c", (char)stuff);
-			
-			if(int_source == (NUM_DATA - 1)) UARTprintf("\n");
-		}
-		UARTprintf("\n\nEND MESSAGE");
-		ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, LED_GREEN);
-	}
-	else
-	{
-		ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, LED_RED);
-		UARTprintf("\n*** DATA SENT! ***\n\n");
-	}
-	
-	SSIIntClear(SSI2_BASE, int_source);
+	ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, LED_GREEN);	
+	SSIIntClear(SSI2_BASE, SSIIntStatus(SSI2_BASE, true));
 }
 
 void EnableInterrupt(void)
@@ -93,12 +69,11 @@ int main(void)
 
 	ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);
   	ROM_GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, LED_RED|LED_BLUE|LED_GREEN);
+	ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, LED_RED);
 	
     // Set up the serial console to use for displaying messages.  This is
     // just for this example program and is not needed for SSI operation.
     InitConsole();
-	
-	ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, LED_GREEN);
 	
     SetupSSI();
 
@@ -110,6 +85,29 @@ int main(void)
     // The "non-blocking" function checks if there is any data in the receive
     // FIFO and does not "hang" if there isn't.
     while(SSIDataGetNonBlocking(SSI2_BASE, NULL));
+	
+	char *blubb = "* Hallo Welt, funktionier endlich du scheiss Dreck, danke! *";
+	
+	UARTprintf("\n\n*** DATA SEND START ***");
+	
+	int i = 0;
+	while(i <= (NUM_DATA + 1))
+	{
+		if(blubb[i] == 0x00) break;
+		SSIDataPut(SSI2_BASE, blubb[i]);
+		UARTprintf("\nChar sent: %c", blubb[i]);
+		i++;
+	}
+	
+	UARTprintf("\n*** DATA SEND END ***\n\n");
+
+    // Wait until SSI2 is done transferring all the data in the transmit FIFO.
+    while(SSIBusy(SSI2_BASE))
+	{
+		ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, LED_BLUE);
+	}
+	
+	ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, LED_GREEN);
 	
     EnableInterrupt();
 
