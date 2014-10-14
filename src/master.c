@@ -86,7 +86,7 @@ int main(void)
     // FIFO and does not "hang" if there isn't.
     while(SSIDataGetNonBlocking(SSI2_BASE, NULL));
 	
-	char *blubb = "Hallo\0";
+	char *blubb = "* Hallo Welt, funktionier endlich du scheiss Dreck, danke! *";
 	
 	int i = 0;
 	while(blubb[i])
