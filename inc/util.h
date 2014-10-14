@@ -15,3 +15,5 @@
 void InitConsole(void);
 
 void OS();
+
+#define NUM_DATA 58

@@ -48,22 +48,32 @@ void SetupSSI()
 
 void OnDataReceived(void)
 {
+	ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, LED_BLUE);
+	
 	unsigned long int_source = SSIIntStatus(SSI2_BASE, true);
-	unsigned long rx_data_size;
-	
-	SSIIntClear(SSI2_BASE, int_source);
-	
-	if(int_source & SSI_RXTO)
+
+	if(int_source & SSI_RXFF)
 	{
-		uint32_t received;
-		rx_data_size = SSIDataGetNonBlocking(SSI2_BASE, &received);
-		
-		UARTprintf("\n%d bits of data received via SSI: %d", rx_data_size, received);
+		UARTprintf("\n*** DATA RECEIVED! ***\n\nData: ");
+		uint32_t stuff;
+
+		for(int_source = 0; int_source < NUM_DATA; int_source++)
+		{
+			SSIDataGet(SSI2_BASE, &stuff);
+			UARTprintf("%c", (char)stuff);
+			
+			if(int_source == (NUM_DATA - 1)) UARTprintf("\n");
+		}
+		UARTprintf("\n\nEND MESSAGE");
+		ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, LED_GREEN);
 	}
 	else
 	{
-		UARTprintf("\nsent stuff");
+		ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, LED_RED);
+		UARTprintf("\n*** DATA SENT! ***\n\n");
 	}
+	
+	SSIIntClear(SSI2_BASE, int_source);
 }
 
 void EnableInterrupt(void)
@@ -100,7 +110,7 @@ int main(void)
     // FIFO and does not "hang" if there isn't.
     while(SSIDataGetNonBlocking(SSI2_BASE, NULL));
 	
-	char *blubb = "* Hallo welt, bitte funktionier endlich du scheiss";
+	char *blubb = "Hallo\0";
 	
 	int i = 0;
 	while(blubb[i])

@@ -15,7 +15,6 @@
 #define LED_RED GPIO_PIN_1
 #define LED_BLUE GPIO_PIN_2
 #define LED_GREEN GPIO_PIN_3
-#define NUM_DATA 48
 
 void SetupSSI()
 {
@@ -49,34 +48,29 @@ void SetupSSI()
 
 void OnDataReceived(void)
 {
-	UARTprintf("\nData flushed in");
 	ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, LED_BLUE);
 	
 	unsigned long int_source = SSIIntStatus(SSI2_BASE, true);
-	unsigned long rx_data_size;
-	
-	//if(SSI_RXTO)
-	//	ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, LED_RED);
 
-	if(int_source & SSI_RXTO)
+	if(int_source & SSI_RXFF)
 	{
+		UARTprintf("\n*** DATA RECEIVED! ***\n\nData: ");
 		uint32_t stuff;
-		//rx_data_size = SSIDataGetNonBlocking(SSI2_BASE, &received);
-		
-		//SSIDataGet(SSI2_BASE, &stuff);
-		
+
 		for(int_source = 0; int_source < NUM_DATA; int_source++)
 		{
 			SSIDataGet(SSI2_BASE, &stuff);
+			UARTprintf("%c", (char)stuff);
+			
+			if(int_source == (NUM_DATA - 1)) UARTprintf("\n");
 		}
-		
-		//UARTprintf("\n%d bits of data received via SSI: %d", rx_data_size, received);
-		//ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, LED_GREEN);
+		UARTprintf("\n\nEND MESSAGE");
+		ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, LED_GREEN);
 	}
 	else
 	{
-		//ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, LED_RED);
-		//UARTprintf("\nsent stuff");
+		ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, LED_RED);
+		UARTprintf("\n*** DATA SENT! ***\n\n");
 	}
 	
 	SSIIntClear(SSI2_BASE, int_source);
