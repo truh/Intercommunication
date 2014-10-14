@@ -52,13 +52,13 @@ void OnDataReceived(void)
 	
 	unsigned long int_source = SSIIntStatus(SSI2_BASE, true);
 
-	if(int_source & SSI_TXFF)
+	if(int_source & SSI_RXFF)
 	{
-		ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, LED_GREEN);
+		ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, LED_RED);
 	}
 	else
 	{
-		ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, LED_RED);
+		ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, LED_GREEN);
 	}
 	
 	SSIIntClear(SSI2_BASE, int_source);
