@@ -52,25 +52,13 @@ void OnDataReceived(void)
 	
 	unsigned long int_source = SSIIntStatus(SSI2_BASE, true);
 
-	if(int_source & SSI_RXFF)
+	if(int_source & SSI_TXFF)
 	{
-		UARTprintf("\n*** DATA RECEIVED! ***\n\nData: ");
-		uint32_t stuff;
-
-		for(int_source = 0; int_source < NUM_DATA; int_source++)
-		{
-			SSIDataGet(SSI2_BASE, &stuff);
-			UARTprintf("%c", (char)stuff);
-			
-			if(int_source == (NUM_DATA - 1)) UARTprintf("\n");
-		}
-		UARTprintf("\n\nEND MESSAGE");
 		ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, LED_GREEN);
 	}
 	else
 	{
 		ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, LED_RED);
-		UARTprintf("\n*** DATA SENT! ***\n\n");
 	}
 	
 	SSIIntClear(SSI2_BASE, int_source);
