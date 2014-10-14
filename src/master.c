@@ -40,7 +40,7 @@ void SetupSSI()
     // Configure and enable the SSI port for TI master mode.  Use SSI2, system
     // clock supply, master mode, 1MHz SSI frequency, and 8-bit data.
     SSIConfigSetExpClk(SSI2_BASE, SysCtlClockGet(), SSI_FRF_MOTO_MODE_0,
-                       SSI_MODE_MASTER, 2000000, 8);
+                       SSI_MODE_SLAVE, 2000000, 8);
 	
 	SSIAdvModeSet(SSI2_BASE, SSI_ADV_MODE_READ_WRITE);
 
@@ -112,14 +112,7 @@ int main(void)
     // FIFO and does not "hang" if there isn't.
     while(SSIDataGetNonBlocking(SSI2_BASE, NULL));
 	
-	EnableInterrupt();
-	
-	while(true)
-	{
-		SSIDataPut(SSI2_BASE, 'r');
-	}
-	
-    
+	EnableInterrupt();    
 	
     OS();  // start the operating system
 	
