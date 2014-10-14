@@ -88,12 +88,17 @@ int main(void)
 	
 	char *blubb = "* Hallo Welt, funktionier endlich du scheiss Dreck, danke! *\0";
 	
+	UARTprintf("\n\n*** DATA SEND START ***");
+	
 	int i = 0;
-	while(blubb[i])
+	while(i <= NUM_DATA)
 	{
 		SSIDataPut(SSI2_BASE, blubb[i]);
+		UARTprintf("\nChar sent: %c", blubb[i]);
 		i++;
 	}
+	
+	UARTprintf("\n*** DATA SEND END ***\n\n");
 	//SSIDataPut(SSI2_BASE, 0xFF);
 
     // Wait until SSI2 is done transferring all the data in the transmit FIFO.
