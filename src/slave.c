@@ -48,7 +48,7 @@ void SetupSSI()
 
 void OnDataReceived(void)
 {
-	SSIIntClear(SSI2_BASE, SSIIntStatus(SSI2_BASE, true));
+	//SSIIntClear(SSI2_BASE, SSIIntStatus(SSI2_BASE, true));
 }
 
 void EnableInterrupt(void)

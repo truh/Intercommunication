@@ -52,7 +52,6 @@ void OnDataReceived(void)
 {
 	ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, LED_BLUE);	
 	unsigned long int_source = SSIIntStatus(SSI2_BASE, true);
-	UARTprintf("called");
 
 	if(int_source & SSI_RXFF)
 	{
@@ -113,12 +112,14 @@ int main(void)
     // FIFO and does not "hang" if there isn't.
     while(SSIDataGetNonBlocking(SSI2_BASE, NULL));
 	
+	EnableInterrupt();
+	
 	while(true)
 	{
 		SSIDataPut(SSI2_BASE, 'r');
 	}
 	
-    EnableInterrupt();
+    
 	
     OS();  // start the operating system
 	
