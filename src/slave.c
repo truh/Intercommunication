@@ -27,7 +27,7 @@ void SetupSSI()
 
     // Configure the pin muxing for SSI2 functions on port B4, B5, B6, and B7.
     GPIOPinConfigure(GPIO_PB4_SSI2CLK);
-    //GPIOPinConfigure(GPIO_PB5_SSI2FSS);
+    GPIOPinConfigure(GPIO_PB5_SSI2FSS);
     GPIOPinConfigure(GPIO_PB6_SSI2RX);
     GPIOPinConfigure(GPIO_PB7_SSI2TX);
 
@@ -36,7 +36,7 @@ void SetupSSI()
     //      PB6 - SSI2Rx
     //      PB5 - SSI2Fss
     //      PB4 - SSI2CLK
-    GPIOPinTypeSSI(GPIO_PORTB_BASE, GPIO_PIN_7 | GPIO_PIN_6 | GPIO_PIN_4);
+    GPIOPinTypeSSI(GPIO_PORTB_BASE, GPIO_PIN_7 | GPIO_PIN_6 | GPIO_PIN_5 | GPIO_PIN_4);
 
     // Configure and enable the SSI port for TI master mode.  Use SSI2, system
     // clock supply, master mode, 1MHz SSI frequency, and 8-bit data.
@@ -49,13 +49,14 @@ void SetupSSI()
 
 void OnDataReceived(void)
 {
+	UARTprintf("\nData flushed in");
 	ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, LED_BLUE);
 	
 	unsigned long int_source = SSIIntStatus(SSI2_BASE, true);
 	unsigned long rx_data_size;
 	
-	if(SSI_RXTO)
-		ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, LED_RED);
+	//if(SSI_RXTO)
+	//	ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, LED_RED);
 
 	if(int_source & SSI_RXTO)
 	{
@@ -70,7 +71,7 @@ void OnDataReceived(void)
 		}
 		
 		//UARTprintf("\n%d bits of data received via SSI: %d", rx_data_size, received);
-		ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, LED_GREEN);
+		//ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, LED_GREEN);
 	}
 	else
 	{
@@ -98,11 +99,12 @@ int main(void)
 
 	ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);
   	ROM_GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, LED_RED|LED_BLUE|LED_GREEN);
-	ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, LED_GREEN);
 	
     // Set up the serial console to use for displaying messages.  This is
     // just for this example program and is not needed for SSI operation.
-    //InitConsole();
+    InitConsole();
+	
+	ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, LED_GREEN);
 	
     SetupSSI();
 
