@@ -48,7 +48,6 @@ void SetupSSI()
 
 void OnDataReceived(void)
 {
-	ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, LED_GREEN);	
 	SSIIntClear(SSI2_BASE, SSIIntStatus(SSI2_BASE, true));
 }
 
