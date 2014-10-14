@@ -93,6 +93,7 @@ int main(void)
 	int i = 0;
 	while(i <= NUM_DATA)
 	{
+		if(blubb[i] == 0x00) break;
 		SSIDataPut(SSI2_BASE, blubb[i]);
 		UARTprintf("\nChar sent: %c", blubb[i]);
 		i++;
