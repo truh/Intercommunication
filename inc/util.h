@@ -16,4 +16,4 @@ void InitConsole(void);
 
 void OS();
 
-#define NUM_DATA 61
+#define NUM_DATA 60

@@ -91,7 +91,7 @@ int main(void)
 	UARTprintf("\n\n*** DATA SEND START ***");
 	
 	int i = 0;
-	while(i <= NUM_DATA)
+	while(i <= (NUM_DATA + 1))
 	{
 		if(blubb[i] == 0x00) break;
 		SSIDataPut(SSI2_BASE, blubb[i]);
