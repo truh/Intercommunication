@@ -26,7 +26,7 @@ void SetupSSI()
 
     // Configure the pin muxing for SSI2 functions on port B4, B5, B6, and B7.
     GPIOPinConfigure(GPIO_PB4_SSI2CLK);
-    GPIOPinConfigure(GPIO_PB5_SSI2FSS);
+    //GPIOPinConfigure(GPIO_PB5_SSI2FSS);
     GPIOPinConfigure(GPIO_PB6_SSI2RX);
     GPIOPinConfigure(GPIO_PB7_SSI2TX);
 
@@ -35,8 +35,7 @@ void SetupSSI()
     //      PB6 - SSI2Rx
     //      PB5 - SSI2Fss
     //      PB4 - SSI2CLK
-    GPIOPinTypeSSI(GPIO_PORTB_BASE, GPIO_PIN_7 | GPIO_PIN_6 | GPIO_PIN_5 |
-                   GPIO_PIN_4);
+    GPIOPinTypeSSI(GPIO_PORTB_BASE, GPIO_PIN_7 | GPIO_PIN_6 | GPIO_PIN_4);
 
     // Configure and enable the SSI port for TI master mode.  Use SSI2, system
     // clock supply, master mode, 1MHz SSI frequency, and 8-bit data.
@@ -49,8 +48,6 @@ void SetupSSI()
 
 void OnDataReceived(void)
 {
-	UARTprintf("\n\n*** DATA RECEIVED ***");
-	
 	unsigned long int_source = SSIIntStatus(SSI2_BASE, true);
 	unsigned long rx_data_size;
 	
@@ -75,7 +72,6 @@ void EnableInterrupt(void)
     IntEnable(INT_SSI2);
     
     // SPI interrupt from receiving data
-    // TODO Set when to call the interrupt
     SSIIntEnable(SSI2_BASE, SSI_RXFF);
 }
 
@@ -104,7 +100,7 @@ int main(void)
     // FIFO and does not "hang" if there isn't.
     while(SSIDataGetNonBlocking(SSI2_BASE, NULL));
 	
-	char *blubb = "* Hallo welt, bitte funktier endlich du scheiss";
+	char *blubb = "* Hallo welt, bitte funktionier endlich du scheiss";
 	
 	int i = 0;
 	while(blubb[i])
