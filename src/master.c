@@ -73,7 +73,7 @@ int main(void)
 	
     // Set up the serial console to use for displaying messages.  This is
     // just for this example program and is not needed for SSI operation.
-    //InitConsole();
+    InitConsole();
 	
     SetupSSI();
 
@@ -99,7 +99,6 @@ int main(void)
 	}
 	
 	UARTprintf("\n*** DATA SEND END ***\n\n");
-	//SSIDataPut(SSI2_BASE, 0xFF);
 
     // Wait until SSI2 is done transferring all the data in the transmit FIFO.
     while(SSIBusy(SSI2_BASE))
@@ -108,12 +107,6 @@ int main(void)
 	}
 	
 	ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, LED_GREEN);
-	
-	
-	//SSIDataGet(SSI2_BASE, &pui32DataRx[ui32Index]);
-
-	// Since we are using 8-bit data, mask off the MSB.
-	//pui32DataRx[ui32Index] &= 0x00FF;*/
 	
     EnableInterrupt();
 

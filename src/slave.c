@@ -111,22 +111,6 @@ int main(void)
     // FIFO and does not "hang" if there isn't.
     while(SSIDataGetNonBlocking(SSI2_BASE, NULL));
 	
-	//SSIDataPut(SSI2_BASE, 0xFF);
-
-    // Wait until SSI2 is done transferring all the data in the transmit FIFO.
-    //while(SSIBusy(SSI2_BASE))
-	//{
-	//	ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, LED_BLUE);
-	//}
-	
-	//ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, LED_GREEN);
-	
-	
-	//SSIDataGet(SSI2_BASE, &pui32DataRx[ui32Index]);
-
-	// Since we are using 8-bit data, mask off the MSB.
-	//pui32DataRx[ui32Index] &= 0x00FF;*/
-	
     EnableInterrupt();
 
     OS();  // start the operating system
