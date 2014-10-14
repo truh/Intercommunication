@@ -48,20 +48,8 @@ void SetupSSI()
 
 void OnDataReceived(void)
 {
-	ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, LED_BLUE);
-	
-	unsigned long int_source = SSIIntStatus(SSI2_BASE, true);
-
-	if(int_source & SSI_RXFF)
-	{
-		ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, LED_RED);
-	}
-	else
-	{
-		ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, LED_GREEN);
-	}
-	
-	SSIIntClear(SSI2_BASE, int_source);
+	ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, LED_GREEN);	
+	SSIIntClear(SSI2_BASE, SSIIntStatus(SSI2_BASE, true));
 }
 
 void EnableInterrupt(void)
