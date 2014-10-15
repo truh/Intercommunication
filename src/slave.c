@@ -3,12 +3,20 @@
 #include <stdlib.h>
 #include "inc/hw_memmap.h"
 #include "inc/hw_ints.h"
+#include "inc/hw_types.h"
+#include "inc/hw_gpio.h"
+#include "inc/hw_sysctl.h"
 #include "driverlib/gpio.h"
 #include "driverlib/interrupt.h"
 #include "driverlib/pin_map.h"
 #include "driverlib/ssi.h"
 #include "driverlib/sysctl.h"
 #include "driverlib/uart.h"
+#include "driverlib/timer.h"
+#include "driverlib/rom.h"
+#include "driverlib/sysctl.h"
+#include "driverlib/can.h"
+#include "buttons.h"
 
 #include "util.h"
 
@@ -62,13 +70,31 @@ void EnableInterrupt(void)
 
 int main(void)
 {
+    uint8_t ui8Buttons;
+  uint8_t led_switch;
+  /*
+  uint8_t ui8ButtonsChanged;
+  */
+
+  ROM_SysCtlClockSet(SYSCTL_SYSDIV_4|SYSCTL_USE_PLL|SYSCTL_XTAL_16MHZ|SYSCTL_OSC_MAIN);
+  ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);
+  ROM_GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, LED_RED|LED_BLUE|LED_GREEN);
+
+  ROM_SysCtlPeripheralEnable(BUTTONS_GPIO_PERIPH);
+  HWREG(BUTTONS_GPIO_BASE + GPIO_O_LOCK) = GPIO_LOCK_KEY;
+  HWREG(BUTTONS_GPIO_BASE + GPIO_O_CR) |= 0x01;
+  HWREG(BUTTONS_GPIO_BASE + GPIO_O_LOCK) = 0;
+  ROM_GPIODirModeSet(BUTTONS_GPIO_BASE, ALL_BUTTONS, GPIO_DIR_MODE_IN);
+  ROM_GPIOPadConfigSet(BUTTONS_GPIO_BASE, ALL_BUTTONS,
+      GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD_WPU);
+
     // Set the clocking to run directly from the external crystal/oscillator.
     SysCtlClockSet(SYSCTL_SYSDIV_1 | SYSCTL_USE_OSC | SYSCTL_OSC_MAIN |
                    SYSCTL_XTAL_16MHZ);
 
 	ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);
   	ROM_GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, LED_RED|LED_BLUE|LED_GREEN);
-	ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, LED_RED);
+	//ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, LED_RED);
 	
     // Set up the serial console to use for displaying messages.  This is
     // just for this example program and is not needed for SSI operation.
@@ -89,15 +115,20 @@ int main(void)
 	
 	UARTprintf("\n\n*** DATA SEND START ***");
 	
-	int i = 0;
-	while(i <= (NUM_DATA + 1))
-	{
-		if(blubb[i] == 0x00) break;
-		SSIDataPut(SSI2_BASE, blubb[i]);
-		UARTprintf("\nChar sent: %c", blubb[i]);
-		i++;
-	}
-	
+	//int i = 0;
+	//while(i <= (NUM_DATA + 1))
+	//{
+	//	if(blubb[i] == 0x00) break;
+	//	SSIDataPut(SSI2_BASE, blubb[i]);
+	//	UARTprintf("\nChar sent: %c", blubb[i]);
+	//	i++;
+	//}
+
+
+	for(int i = 0;i<4;i++){
+        SSIDataPut(SSI2_BASE,(1<<1)|(1<<0));
+    }   
+
 	UARTprintf("\n*** DATA SEND END ***\n\n");
 
     // Wait until SSI2 is done transferring all the data in the transmit FIFO.
