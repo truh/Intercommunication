@@ -40,7 +40,7 @@ void SetupSSI()
     // Configure and enable the SSI port for TI master mode.  Use SSI2, system
     // clock supply, master mode, 1MHz SSI frequency, and 8-bit data.
     SSIConfigSetExpClk(SSI2_BASE, SysCtlClockGet(), SSI_FRF_MOTO_MODE_0,
-                       SSI_MODE_SLAVE, 2000000, 8);
+                       SSI_MODE_MASTER, 2000000, 8);
 
     // Enable the SSI2 module.
     SSIEnable(SSI2_BASE);
@@ -48,7 +48,6 @@ void SetupSSI()
 
 void OnDataReceived(void)
 {
-	UARTprintf("\nget register'd m8");
 	SSIIntClear(SSI2_BASE, SSIIntStatus(SSI2_BASE, true));
 }
 
@@ -86,36 +85,30 @@ int main(void)
     // FIFO and does not "hang" if there isn't.
     while(SSIDataGetNonBlocking(SSI2_BASE, NULL));
 	
-	EnableInterrupt();
-	
 	char *blubb = "* Hallo Welt, funktionier endlich du scheiss Dreck, danke! *";
-	uint32_t data;
 	
-	while(1)
+	UARTprintf("\n\n*** DATA SEND START ***");
+	
+	int i = 0;
+	while(i <= (NUM_DATA + 1))
 	{
-		SSIDataGet(SSI2_BASE, &data);
-		
-		UARTprintf("\n\n*** DATA SEND START ***");
-	
-		int i = 0;
-		while(i <= (NUM_DATA + 1))
-		{
-			if(blubb[i] == 0x00) break;
-			SSIDataPut(SSI2_BASE, blubb[i]);
-			UARTprintf("\nChar sent: %c", blubb[i]);
-			i++;
-		}
-	
-		UARTprintf("\n*** DATA SEND END ***\n\n");
-		
-		// Wait until SSI2 is done transferring all the data in the transmit FIFO.
-    	while(SSIBusy(SSI2_BASE))
-		{
-			ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, LED_BLUE);
-		}
-	
-		ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, LED_GREEN);
+		if(blubb[i] == 0x00) break;
+		SSIDataPut(SSI2_BASE, blubb[i]);
+		UARTprintf("\nChar sent: %c", blubb[i]);
+		i++;
 	}
+	
+	UARTprintf("\n*** DATA SEND END ***\n\n");
+
+    // Wait until SSI2 is done transferring all the data in the transmit FIFO.
+    while(SSIBusy(SSI2_BASE))
+	{
+		ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, LED_BLUE);
+	}
+	
+	ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, LED_GREEN);
+	
+    EnableInterrupt();
 
     OS();  // start the operating system
 	
