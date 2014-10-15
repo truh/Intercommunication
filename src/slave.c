@@ -40,7 +40,7 @@ void SetupSSI()
     // Configure and enable the SSI port for TI master mode.  Use SSI2, system
     // clock supply, master mode, 1MHz SSI frequency, and 8-bit data.
     SSIConfigSetExpClk(SSI2_BASE, SysCtlClockGet(), SSI_FRF_MOTO_MODE_0,
-                       SSI_MODE_MASTER, 2000000, 8);
+                       SSI_MODE_SLAVE, 2000000, 8);
 
     // Enable the SSI2 module.
     SSIEnable(SSI2_BASE);
@@ -48,6 +48,7 @@ void SetupSSI()
 
 void OnDataReceived(void)
 {
+	UARTprintf("\nget register'd m8");
 	SSIIntClear(SSI2_BASE, SSIIntStatus(SSI2_BASE, true));
 }
 
@@ -85,6 +86,18 @@ int main(void)
     // FIFO and does not "hang" if there isn't.
     while(SSIDataGetNonBlocking(SSI2_BASE, NULL));
 	
+	EnableInterrupt();
+	
+	uint32_t data;
+	
+	while(1)
+	{
+		SSIDataGet(SSI2_BASE, &data);
+		
+		UARTprintf("\n\n****** READY *******");
+	}
+	/*
+	
 	char *blubb = "* Hallo Welt, funktionier endlich du scheiss Dreck, danke! *";
 	
 	UARTprintf("\n\n*** DATA SEND START ***");
@@ -98,7 +111,7 @@ int main(void)
 		i++;
 	}
 	
-	UARTprintf("\n*** DATA SEND END ***\n\n");
+	UARTprintf("\n*** DATA SEND END ***\n\n");*/
 
     // Wait until SSI2 is done transferring all the data in the transmit FIFO.
     while(SSIBusy(SSI2_BASE))
@@ -107,8 +120,6 @@ int main(void)
 	}
 	
 	ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, LED_GREEN);
-	
-    EnableInterrupt();
 
     OS();  // start the operating system
 	
