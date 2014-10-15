@@ -51,7 +51,6 @@ void SetupSSI()
 
 void OnDataReceived(void)
 {
-	UARTprintf("\ndata received");
 	ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, LED_BLUE);	
 	unsigned long int_source = SSIIntStatus(SSI2_BASE, true);
 
@@ -75,6 +74,10 @@ void OnDataReceived(void)
 	}
 	
 	SSIIntClear(SSI2_BASE, int_source);
+}
+
+void OnButtonPressed(void)
+{
 }
 
 void EnableInterrupt(void)

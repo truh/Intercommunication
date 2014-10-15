@@ -24,6 +24,9 @@
 #define LED_BLUE GPIO_PIN_2
 #define LED_GREEN GPIO_PIN_3
 
+bool g_bLeftTimerRunning = false;
+bool g_bRightTimerRunning = false;
+
 void SetupSSI()
 {
     // The SSI2 peripheral must be enabled for use.
@@ -59,6 +62,25 @@ void OnDataReceived(void)
 	SSIIntClear(SSI2_BASE, SSIIntStatus(SSI2_BASE, true));
 }
 
+void OnButtonPressed(void)
+{
+	uint8_t buttonStates = (uint8_t)~ROM_GPIOPinRead(BUTTONS_GPIO_BASE, ALL_BUTTONS);
+    if(buttonStates & LEFT_BUTTON)
+	{
+		GPIOIntClear(GPIO_PORTF_BASE, LEFT_BUTTON);
+		if(g_bLeftTimerRunning) return;
+		g_bLeftTimerRunning = true;
+		UARTprintf("\nleft button was pressed");
+	}
+	if(buttonStates & RIGHT_BUTTON)
+	{
+		GPIOIntClear(GPIO_PORTF_BASE, RIGHT_BUTTON);
+		if(g_bRightTimerRunning) return;
+		g_bRightTimerRunning = true;
+		UARTprintf("\nright button was pressed");
+	}
+}
+
 void EnableInterrupt(void)
 {
     // Enable SPI interrupt 
@@ -68,37 +90,43 @@ void EnableInterrupt(void)
     SSIIntEnable(SSI2_BASE, SSI_RXFF);
 }
 
+void EnableButtons(void)
+{
+	// Enable the GPIO port to which the push buttons are connected.
+	ROM_SysCtlPeripheralEnable(BUTTONS_GPIO_PERIPH);
+	
+	// Unlock PF0 to set the buttons to GPIO input
+  	HWREG(BUTTONS_GPIO_BASE + GPIO_O_LOCK) = GPIO_LOCK_KEY;
+  	HWREG(BUTTONS_GPIO_BASE + GPIO_O_CR) |= 0x01;
+  	HWREG(BUTTONS_GPIO_BASE + GPIO_O_LOCK) = 0;
+	
+  	ROM_GPIODirModeSet(BUTTONS_GPIO_BASE, ALL_BUTTONS, GPIO_DIR_MODE_IN);
+  	ROM_GPIOPadConfigSet(BUTTONS_GPIO_BASE, ALL_BUTTONS,
+      GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD_WPU);
+	  
+	// Enable the port/pins for interrupts
+	ROM_GPIOIntTypeSet(GPIO_PORTF_BASE, ALL_BUTTONS, GPIO_FALLING_EDGE);
+	GPIOIntEnable(BUTTONS_GPIO_BASE, ALL_BUTTONS);
+	ROM_IntEnable(INT_GPIOF);
+}
+
 int main(void)
 {
-    uint8_t ui8Buttons;
-  uint8_t led_switch;
-  /*
-  uint8_t ui8ButtonsChanged;
-  */
-
-  ROM_SysCtlClockSet(SYSCTL_SYSDIV_4|SYSCTL_USE_PLL|SYSCTL_XTAL_16MHZ|SYSCTL_OSC_MAIN);
-  ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);
-  ROM_GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, LED_RED|LED_BLUE|LED_GREEN);
-
-  ROM_SysCtlPeripheralEnable(BUTTONS_GPIO_PERIPH);
-  HWREG(BUTTONS_GPIO_BASE + GPIO_O_LOCK) = GPIO_LOCK_KEY;
-  HWREG(BUTTONS_GPIO_BASE + GPIO_O_CR) |= 0x01;
-  HWREG(BUTTONS_GPIO_BASE + GPIO_O_LOCK) = 0;
-  ROM_GPIODirModeSet(BUTTONS_GPIO_BASE, ALL_BUTTONS, GPIO_DIR_MODE_IN);
-  ROM_GPIOPadConfigSet(BUTTONS_GPIO_BASE, ALL_BUTTONS,
-      GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD_WPU);
-
-    // Set the clocking to run directly from the external crystal/oscillator.
+	// Set the clocking to run directly from the external crystal/oscillator.
     SysCtlClockSet(SYSCTL_SYSDIV_1 | SYSCTL_USE_OSC | SYSCTL_OSC_MAIN |
                    SYSCTL_XTAL_16MHZ);
-
-	ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);
+  	
+	// Enable the LEDs
+  	ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);
   	ROM_GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, LED_RED|LED_BLUE|LED_GREEN);
-	//ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, LED_RED);
+	
+	EnableButtons();
 	
     // Set up the serial console to use for displaying messages.  This is
     // just for this example program and is not needed for SSI operation.
     InitConsole();
+	
+	UARTprintf("\nInitialized\n");
 	
     SetupSSI();
 
@@ -111,10 +139,6 @@ int main(void)
     // FIFO and does not "hang" if there isn't.
     while(SSIDataGetNonBlocking(SSI2_BASE, NULL));
 	
-	char *blubb = "* Hallo Welt, funktionier endlich du scheiss Dreck, danke! *";
-	
-	UARTprintf("\n\n*** DATA SEND START ***");
-	
 	//int i = 0;
 	//while(i <= (NUM_DATA + 1))
 	//{
@@ -124,7 +148,8 @@ int main(void)
 	//	i++;
 	//}
 
-
+	UARTprintf("\n\n*** DATA SEND START ***");
+	
 	for(int i = 0;i<4;i++){
         SSIDataPut(SSI2_BASE,(1<<1)|(1<<0));
     }   
