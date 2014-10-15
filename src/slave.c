@@ -88,38 +88,34 @@ int main(void)
 	
 	EnableInterrupt();
 	
+	char *blubb = "* Hallo Welt, funktionier endlich du scheiss Dreck, danke! *";
 	uint32_t data;
 	
 	while(1)
 	{
 		SSIDataGet(SSI2_BASE, &data);
 		
-		UARTprintf("\n\n****** READY *******");
+		UARTprintf("\n\n*** DATA SEND START ***");
+	
+		int i = 0;
+		while(i <= (NUM_DATA + 1))
+		{
+			if(blubb[i] == 0x00) break;
+			SSIDataPut(SSI2_BASE, blubb[i]);
+			UARTprintf("\nChar sent: %c", blubb[i]);
+			i++;
+		}
+	
+		UARTprintf("\n*** DATA SEND END ***\n\n");
+		
+		// Wait until SSI2 is done transferring all the data in the transmit FIFO.
+    	while(SSIBusy(SSI2_BASE))
+		{
+			ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, LED_BLUE);
+		}
+	
+		ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, LED_GREEN);
 	}
-	/*
-	
-	char *blubb = "* Hallo Welt, funktionier endlich du scheiss Dreck, danke! *";
-	
-	UARTprintf("\n\n*** DATA SEND START ***");
-	
-	int i = 0;
-	while(i <= (NUM_DATA + 1))
-	{
-		if(blubb[i] == 0x00) break;
-		SSIDataPut(SSI2_BASE, blubb[i]);
-		UARTprintf("\nChar sent: %c", blubb[i]);
-		i++;
-	}
-	
-	UARTprintf("\n*** DATA SEND END ***\n\n");*/
-
-    // Wait until SSI2 is done transferring all the data in the transmit FIFO.
-    while(SSIBusy(SSI2_BASE))
-	{
-		ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, LED_BLUE);
-	}
-	
-	ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, LED_GREEN);
 
     OS();  // start the operating system
 	
