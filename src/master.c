@@ -10,6 +10,7 @@
 #include "driverlib/sysctl.h"
 #include "driverlib/uart.h"
 
+#include "protocol.h"
 #include "util.h"
 
 #define LED_RED GPIO_PIN_1
@@ -50,28 +51,27 @@ void SetupSSI()
 
 void OnDataReceived(void)
 {
+	UARTprintf("\ndata received");
 	ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, LED_BLUE);	
 	unsigned long int_source = SSIIntStatus(SSI2_BASE, true);
 
 	if(int_source & SSI_RXFF)
 	{
-		UARTprintf("\n*** DATA RECEIVED! ***\n\nData: ");
-		uint32_t stuff;
+		uint32_t data;
 
 		for(int_source = 0; int_source < NUM_DATA; int_source++)
 		{
-			SSIDataGet(SSI2_BASE, &stuff);
-			UARTprintf("%c", (char)stuff);
-			
-			if(int_source == (NUM_DATA - 1)) UARTprintf("\n");
+			SSIDataGet(SSI2_BASE, &data);
 		}
-		UARTprintf("\n\nEND MESSAGE");
-		ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, LED_GREEN);
-	}
-	else
-	{
-		ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, LED_RED);
-		UARTprintf("\n*** DATA SENT! ***\n\n");
+		
+		// reset LED's
+		ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, 0);
+		uint32_t leds;
+		
+		if(data & P_LED_GREEN) leds |= LED_GREEN;
+		if(data & P_LED_RED) leds |= LED_RED;
+		if(data & P_LED_BLUE) leds |= LED_BLUE;
+		ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, leds);
 	}
 	
 	SSIIntClear(SSI2_BASE, int_source);
@@ -98,8 +98,6 @@ int main(void)
     // Set up the serial console to use for displaying messages.  This is
     // just for this example program and is not needed for SSI operation.
     InitConsole();
-	
-	ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, LED_GREEN);
 	
     SetupSSI();
 
