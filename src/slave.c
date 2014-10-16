@@ -18,14 +18,25 @@
 #include "driverlib/can.h"
 #include "buttons.h"
 
+#include "protocol.h"
 #include "util.h"
 
 #define LED_RED GPIO_PIN_1
 #define LED_BLUE GPIO_PIN_2
 #define LED_GREEN GPIO_PIN_3
 
-bool g_bLeftTimerRunning = false;
-bool g_bRightTimerRunning = false;
+uint32_t g_iTime = 0;
+
+void StartTimer()
+{
+	g_iTime = 0;
+	ROM_TimerEnable(TIMER0_BASE, TIMER_A);
+}
+
+void StopTimer()
+{
+	ROM_TimerDisable(TIMER0_BASE, TIMER_A);
+}
 
 void SetupSSI()
 {
@@ -64,30 +75,59 @@ void OnDataReceived(void)
 
 void OnButtonPressed(void)
 {
+	ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, 0);
+	
 	uint8_t buttonStates = (uint8_t)~ROM_GPIOPinRead(BUTTONS_GPIO_BASE, ALL_BUTTONS);
     if(buttonStates & LEFT_BUTTON)
 	{
 		GPIOIntClear(GPIO_PORTF_BASE, LEFT_BUTTON);
-		if(g_bLeftTimerRunning) return;
-		g_bLeftTimerRunning = true;
 		UARTprintf("\nleft button was pressed");
+		
+		StartTimer();
+		
 	}
 	if(buttonStates & RIGHT_BUTTON)
 	{
 		GPIOIntClear(GPIO_PORTF_BASE, RIGHT_BUTTON);
-		if(g_bRightTimerRunning) return;
-		g_bRightTimerRunning = true;
 		UARTprintf("\nright button was pressed");
+		
+		StartTimer();
 	}
 }
 
-void EnableInterrupt(void)
+void OnTimerInterrupt(void)
 {
-    // Enable SPI interrupt 
-    IntEnable(INT_SSI2);
-    
-    // SPI interrupt from receiving data
-    SSIIntEnable(SSI2_BASE, SSI_RXFF);
+	// Clear the timer interrupt
+	ROM_TimerIntClear(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
+	
+	g_iTime += 1;
+	
+	uint8_t buttonStates = (uint8_t)~ROM_GPIOPinRead(BUTTONS_GPIO_BASE, ALL_BUTTONS);
+	
+	if(!(buttonStates & LEFT_BUTTON) && !(buttonStates & RIGHT_BUTTON)) StopTimer();
+	
+	if(g_iTime >= 2000)
+	{
+		StopTimer();
+		
+		uint32_t led = 0;
+		if(buttonStates & LEFT_BUTTON) led = P_LED_GREEN;
+		if(buttonStates & RIGHT_BUTTON) led = P_LED_RED;
+		
+		for(int i = 0;i<4;i++)
+		{
+        	SSIDataPut(SSI2_BASE, led);
+			UARTprintf("sent data");
+    	}   
+
+    	// Wait until SSI2 is done transferring all the data in the transmit FIFO.
+    	while(SSIBusy(SSI2_BASE))
+		{
+			ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, LED_BLUE);
+		}
+	
+		ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, LED_GREEN);
+	}
 }
 
 void EnableButtons(void)
@@ -110,25 +150,53 @@ void EnableButtons(void)
 	ROM_IntEnable(INT_GPIOF);
 }
 
+void EnableInterrupt(void)
+{
+    // Enable SPI interrupt 
+    IntEnable(INT_SSI2);
+    
+    // SPI interrupt from receiving data
+    SSIIntEnable(SSI2_BASE, SSI_RXFF);
+}
+
+void EnableLED(void)
+{
+	// Enable the LEDs
+  	ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);
+  	ROM_GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, LED_RED|LED_BLUE|LED_GREEN);
+}
+
+void EnableTimer(void)
+{
+	// Enable the Timer Port used in this program
+    ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_TIMER0);
+
+    // Configure the 32 bit periodic timer
+    ROM_TimerConfigure(TIMER0_BASE, TIMER_CFG_PERIODIC);
+    
+	ROM_TimerLoadSet(TIMER0_BASE, TIMER_A, ROM_SysCtlClockGet() / 1000);
+
+    // Setup the interrupts for the timer timeouts.
+    ROM_IntEnable(INT_TIMER0A);
+    ROM_TimerIntEnable(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
+}
+
 int main(void)
 {
 	// Set the clocking to run directly from the external crystal/oscillator.
     SysCtlClockSet(SYSCTL_SYSDIV_1 | SYSCTL_USE_OSC | SYSCTL_OSC_MAIN |
                    SYSCTL_XTAL_16MHZ);
-  	
-	// Enable the LEDs
-  	ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);
-  	ROM_GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, LED_RED|LED_BLUE|LED_GREEN);
-	
-	EnableButtons();
-	
-    // Set up the serial console to use for displaying messages.  This is
+				   
+	// Set up the serial console to use for displaying messages.  This is
     // just for this example program and is not needed for SSI operation.
     InitConsole();
+  	
+	EnableButtons();
+	EnableLED();
+	EnableTimer();
+	SetupSSI();
 	
 	UARTprintf("\nInitialized\n");
-	
-    SetupSSI();
 
     // Read any residual data from the SSI port.  This makes sure the receive
     // FIFOs are empty, so we don't read any unwanted junk.  This is done here
@@ -148,22 +216,6 @@ int main(void)
 	//	i++;
 	//}
 
-	UARTprintf("\n\n*** DATA SEND START ***");
-	
-	for(int i = 0;i<4;i++){
-        SSIDataPut(SSI2_BASE,(1<<1)|(1<<0));
-    }   
-
-	UARTprintf("\n*** DATA SEND END ***\n\n");
-
-    // Wait until SSI2 is done transferring all the data in the transmit FIFO.
-    while(SSIBusy(SSI2_BASE))
-	{
-		ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, LED_BLUE);
-	}
-	
-	ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, LED_GREEN);
-	
     EnableInterrupt();
 
     OS();  // start the operating system

@@ -80,6 +80,10 @@ void OnButtonPressed(void)
 {
 }
 
+void OnTimerInterrupt(void)
+{
+}
+
 void EnableInterrupt(void)
 {
     // Enable SPI interrupt 
