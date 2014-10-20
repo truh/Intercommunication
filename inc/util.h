@@ -14,6 +14,8 @@
 
 void InitConsole(void);
 
+void SetupSSI(uint32_t);
+
 void OS();
 
 #define NUM_DATA 1

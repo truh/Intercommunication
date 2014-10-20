@@ -1,3 +1,9 @@
+/*
+  Name of file  : slave.c
+  Author        : Andreas Willinger
+  Version       : 20141020.1
+  Description   : Handles the buttons and sends commands to the master through SPI to enable/disable LEDs.
+*/
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -26,6 +32,7 @@
 #define LED_GREEN GPIO_PIN_3
 
 uint32_t g_iTime = 0;
+uint32_t g_iLedStates = 0;
 
 void StartTimer()
 {
@@ -38,34 +45,20 @@ void StopTimer()
 	ROM_TimerDisable(TIMER0_BASE, TIMER_A);
 }
 
-void SetupSSI()
-{
-    // The SSI2 peripheral must be enabled for use.
-    SysCtlPeripheralEnable(SYSCTL_PERIPH_SSI2);
+void SendLEDStates()
+{		
+	for(int i = 0;i<4;i++)
+	{
+		SSIDataPut(SSI2_BASE, g_iLedStates);
+	}   
 
-    // SSI2 -> PortA[5:2].
-    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOB);
-
-    // Configure the pin muxing for SSI2 functions on port B4, B5, B6, and B7.
-    GPIOPinConfigure(GPIO_PB4_SSI2CLK);
-    GPIOPinConfigure(GPIO_PB5_SSI2FSS);
-    GPIOPinConfigure(GPIO_PB6_SSI2RX);
-    GPIOPinConfigure(GPIO_PB7_SSI2TX);
-
-    // Configure the GPIO settings for the SSI pins.
-    //      PB7 - SSI2Tx
-    //      PB6 - SSI2Rx
-    //      PB5 - SSI2Fss
-    //      PB4 - SSI2CLK
-    GPIOPinTypeSSI(GPIO_PORTB_BASE, GPIO_PIN_7 | GPIO_PIN_6 | GPIO_PIN_5 | GPIO_PIN_4);
-
-    // Configure and enable the SSI port for TI master mode.  Use SSI2, system
-    // clock supply, master mode, 1MHz SSI frequency, and 8-bit data.
-    SSIConfigSetExpClk(SSI2_BASE, SysCtlClockGet(), SSI_FRF_MOTO_MODE_0,
-                       SSI_MODE_MASTER, 2000000, 8);
-
-    // Enable the SSI2 module.
-    SSIEnable(SSI2_BASE);
+	// Wait until SSI2 is done transferring all the data in the transmit FIFO.
+	while(SSIBusy(SSI2_BASE))
+	{
+		ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, LED_BLUE);
+	}
+	
+	ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, LED_GREEN);
 }
 
 void OnDataReceived(void)
@@ -83,6 +76,9 @@ void OnButtonPressed(void)
 		GPIOIntClear(GPIO_PORTF_BASE, LEFT_BUTTON);
 		UARTprintf("\nleft button was pressed");
 		
+		g_iLedStates &= ~P_LED_GREEN;
+		SendLEDStates();
+		
 		StartTimer();
 		
 	}
@@ -90,6 +86,9 @@ void OnButtonPressed(void)
 	{
 		GPIOIntClear(GPIO_PORTF_BASE, RIGHT_BUTTON);
 		UARTprintf("\nright button was pressed");
+		
+		g_iLedStates &= ~P_LED_RED;
+		SendLEDStates();
 		
 		StartTimer();
 	}
@@ -110,23 +109,10 @@ void OnTimerInterrupt(void)
 	{
 		StopTimer();
 		
-		uint32_t led = 0;
-		if(buttonStates & LEFT_BUTTON) led = P_LED_GREEN;
-		if(buttonStates & RIGHT_BUTTON) led = P_LED_RED;
+		if(buttonStates & LEFT_BUTTON) g_iLedStates |= P_LED_GREEN;
+		if(buttonStates & RIGHT_BUTTON) g_iLedStates |= P_LED_RED;
 		
-		for(int i = 0;i<4;i++)
-		{
-        	SSIDataPut(SSI2_BASE, led);
-			UARTprintf("sent data");
-    	}   
-
-    	// Wait until SSI2 is done transferring all the data in the transmit FIFO.
-    	while(SSIBusy(SSI2_BASE))
-		{
-			ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, LED_BLUE);
-		}
-	
-		ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, LED_GREEN);
+		SendLEDStates();
 	}
 }
 
@@ -194,7 +180,7 @@ int main(void)
 	EnableButtons();
 	EnableLED();
 	EnableTimer();
-	SetupSSI();
+	SetupSSI(SSI_MODE_MASTER);
 	
 	UARTprintf("\nInitialized\n");
 
