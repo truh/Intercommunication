@@ -16,13 +16,15 @@ OUTDIR = build
 # TIVAWARE_PATH: path to tivaware folder
 TIVAWARE_PATH = $(HOME)/opt/tivaware
 
+PROJ := src/blink
+
 # SOURCES: list of input source sources
-SOURCEDIR = src/blink
+SOURCEDIR = $(PROJ)
 SOURCES = $(wildcard $(SOURCEDIR)/*.c)
 
-SOURCES += $(TIVAWARE_PATH)/driverlib/gpio.c
 SOURCES += $(TIVAWARE_PATH)/utils/uartstdio.c
-SOURCES += $(TIVAWARE_PATH)/examples/boards/ek-tm4c123gxl/drivers/buttons.c
+
+TI_LIB = $(TIVAWARE_PATH)/driverlib/gcc/libdriver.a
 
 # INCLUDES: list of includes, by default, use Includes directory
 INCLUDES = -Iinclude -I$(TIVAWARE_PATH)
@@ -62,7 +64,7 @@ $(OBJECTS): $(SOURCES) | $(OUTDIR)
 	$(CC) -o $@ $(filter %$(subst .o,.c,$(@F)), $(SOURCES)) $(CFLAGS)
 
 $(OUTDIR)/$(TARGET): $(OBJECTS)
-	$(LD) -o $@ $^ $(LDFLAGS)
+	$(LD) -o $@ $^ $(TI_LIB) $(LDFLAGS)
 
 $(OUTDIR)/$(TARGET).bin: $(OUTDIR)/$(TARGET)
 	$(OBJCOPY) -O binary $< $@
