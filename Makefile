@@ -1,18 +1,36 @@
+# Tiva Makefile
+# #####################################
+#
+# Part of the uCtools project
+# uctools.github.com
+#
+#######################################
+# user configuration:
+#######################################
+# TARGET: name of the output file
+TARGET = main
+# MCU: part number to build for
 MCU = TM4C123GH6PM
-
-# TIVAWARE_PATH: path to tivaware folder
-TIVAWARE_PATH = $(HOME)/opt/tivaware/
 # OUTDIR: directory to use for output
 OUTDIR = build
+# TIVAWARE_PATH: path to tivaware folder
+TIVAWARE_PATH = $(HOME)/opt/tivaware
 
 # Sources
 VPATH = src:$(TIVAWARE_PATH):$(TIVAWARE_PATH)/driverlib:$(TIVAWARE_PATH)/utils
 
-COMMON_SRC = gpio.c ssi.c sysctl.c uart.c uartstdio.c interrupt.c util.c startup_isr.c cpu.c
-MASTER_SRC = master.c
-SLAVE_SRC = slave.c
+PROJ := src/blink
 
-INCLUDE = -Iinc
+# SOURCES: list of input source sources
+SOURCEDIR = $(PROJ)
+SOURCES = $(wildcard $(SOURCEDIR)/*.c)
+
+SOURCES += $(TIVAWARE_PATH)/utils/uartstdio.c
+
+TI_LIB = $(TIVAWARE_PATH)/driverlib/gcc/libdriver.a
+
+# INCLUDES: list of includes, by default, use Includes directory
+INCLUDES = -Iinclude -I$(TIVAWARE_PATH)
 
 # LD_SCRIPT: linker script
 LD_SCRIPT = $(MCU).ld
@@ -20,9 +38,8 @@ LD_SCRIPT = $(MCU).ld
 # define flags
 CFLAGS = -g -mthumb -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=softfp
 CFLAGS +=-Os -ffunction-sections -fdata-sections -MD -std=c99 -Wall
-CFLAGS += -pedantic -DPART_$(MCU) -c -I$(TIVAWARE_PATH)
-CFLAGS += -DTARGET_IS_BLIZZARD_RA1 -Dgcc
-CFLAGS += $(INCLUDE)
+CFLAGS += -pedantic -DPART_$(MCU) -c $(INCLUDES)
+CFLAGS += -DTARGET_IS_BLIZZARD_RA1
 LDFLAGS = -T $(LD_SCRIPT) --entry ResetISR --gc-sections
 
 #######################################
@@ -35,42 +52,39 @@ LDFLAGS = -T $(LD_SCRIPT) --entry ResetISR --gc-sections
 CC = arm-none-eabi-gcc
 LD = arm-none-eabi-ld
 OBJCOPY = arm-none-eabi-objcopy
-RM      = rm -f
+FLASH	= lm4flash
+RM      = rm -rf
 MKDIR	= mkdir -p
 #######################################
 
-ALL_MASTER_SRC = $(MASTER_SRC) $(COMMON_SRC)
-ALL_SLAVE_SRC = $(SLAVE_SRC) $(COMMON_SRC)
-
 # list of object files, placed in the build directory regardless of source path
-MASTER_OBJS = $(addprefix $(OUTDIR)/,$(notdir $(ALL_MASTER_SRC:.c=.o)))
-
-# list of object files, placed in the build directory regardless of source path
-SLAVE_OBJS = $(addprefix $(OUTDIR)/,$(notdir $(ALL_SLAVE_SRC:.c=.o)))
+OBJECTS = $(addprefix $(OUTDIR)/,$(notdir $(SOURCES:.c=.o)))
 
 # default: build bin
-all: $(OUTDIR)/master.bin $(OUTDIR)/slave.bin
+all: $(OUTDIR)/$(TARGET).bin
 
-$(OUTDIR)/%.o: %.c | $(OUTDIR)
-	$(CC) -o $@ $^ $(CFLAGS)
+$(OBJECTS): $(SOURCES) | $(OUTDIR)
+	$(CC) -o $@ $(filter %$(subst .o,.c,$(@F)), $(SOURCES)) $(CFLAGS)
 
-$(OUTDIR)/master.out: $(MASTER_OBJS)
-	$(LD) -o $@ $^ $(LDFLAGS)
+$(OUTDIR)/$(TARGET): $(OBJECTS)
+	$(LD) -o $@ $^ $(TI_LIB) $(LDFLAGS)
 
-$(OUTDIR)/slave.out: $(SLAVE_OBJS)
-	$(LD) -o $@ $^ $(LDFLAGS)
-
-$(OUTDIR)/master.bin: $(OUTDIR)/master.out
-	$(OBJCOPY) -O binary $< $@
-
-$(OUTDIR)/slave.bin: $(OUTDIR)/slave.out
+$(OUTDIR)/$(TARGET).bin: $(OUTDIR)/$(TARGET)
 	$(OBJCOPY) -O binary $< $@
 
 # create the output directory
 $(OUTDIR):
 	$(MKDIR) $(OUTDIR)
 
+program: $(OUTDIR)/$(TARGET).bin
+	$(FLASH) $(OUTDIR)/$(TARGET).bin
+
+flash: program
+
+debug: clean flash
+	debug/debug_nemiver.sh $(TARGET)
+
 clean:
 	-$(RM) $(OUTDIR)/*
 
-.PHONY: all clean
+.PHONY: all clean debug flash program

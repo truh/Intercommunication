@@ -27,3 +27,8 @@ build/
 *.exe
 *.out
 *.app
+
+# scons stuff
+*.d
+*.bin
+.sconsign.dblite
