@@ -16,10 +16,7 @@ OUTDIR = build
 # TIVAWARE_PATH: path to tivaware folder
 TIVAWARE_PATH = $(HOME)/opt/tivaware
 
-# Sources
-VPATH = src:$(TIVAWARE_PATH):$(TIVAWARE_PATH)/driverlib:$(TIVAWARE_PATH)/utils
-
-PROJ := src/blink
+PROJ := src/spi_slave
 
 # SOURCES: list of input source sources
 SOURCEDIR = $(PROJ)
@@ -87,4 +84,4 @@ debug: clean flash
 clean:
 	-$(RM) $(OUTDIR)/*
 
-.PHONY: all clean debug flash program
+.PHONY: all clean
